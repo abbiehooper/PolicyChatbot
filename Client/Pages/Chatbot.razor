@@ -1,0 +1,83 @@
+﻿@page "/"
+@using System.Net.Http.Json
+@inject HttpClient Http
+
+<PageTitle>Policy Chatbot</PageTitle>
+
+<div class="container mt-4">
+    <h2>Insurance Policy Chatbot</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <label class="form-label">Select Insurance Type</label>
+            <select class="form-select" @onchange="OnInsuranceTypeChanged">
+                <option value="">-- Select Type --</option>
+                @foreach (var type in insuranceTypes)
+                {
+                    <option value="@type">@type</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Select Insurer</label>
+            <select class="form-select" @onchange="OnInsurerChanged" disabled="@(string.IsNullOrEmpty(selectedInsuranceType))">
+                <option value="">-- Select Insurer --</option>
+                @foreach (var insurer in availableInsurers)
+                {
+                    <option value="@insurer">@insurer</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Select Product</label>
+            <select class="form-select" @bind="selectedProductId" disabled="@(string.IsNullOrEmpty(selectedInsurer))">
+                <option value="">-- Select Product --</option>
+                @foreach (var product in availableProducts)
+                {
+                    <option value="@product.Id">@product.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(selectedProductId))
+    {
+        <div class="alert alert-info mt-3">
+            <strong>Current Policy:</strong> @selectedInsuranceType → @selectedInsurer → @availableProducts.FirstOrDefault(p => p.Id == selectedProductId)?.Name
+        </div>
+
+        <div class="chat-container mt-4">
+            <div class="chat-messages" style="height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; border-radius: 5px; background-color: #f8f9fa;">
+                @foreach (var msg in chatMessages)
+                {
+                    <div class="message mb-3 @(msg.IsUser ? "user-message" : "bot-message")">
+                        <strong>@(msg.IsUser ? "You" : "Assistant"):</strong>
+                        <div class="mt-1">@msg.Content</div>
+                    </div>
+                }
+
+                @if (isLoading)
+                {
+                    <div class="text-muted">
+                        <em>Assistant is typing...</em>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+            </div>
+
+            <div class="input-group mt-3">
+                <input type="text" class="form-control" placeholder="Ask a question about this policy..."
+                       @bind="userInput" @onkeypress="HandleKeyPress" disabled="@isLoading" />
+                <button class="btn btn-primary" @onclick="SendMessage" disabled="@isLoading">
+                    Send
+                </button>
+            </div>
+        </div>
+    }
+</div>
