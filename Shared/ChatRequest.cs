@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PolicyChatbot.Shared
+namespace PolicyChatbot.Shared;
+
+public class ChatRequest
 {
-    public class ChatRequest
-    {
-        public string ProductId { get; set; } = "";
-        public string Question { get; set; } = "";
-    }
+    public string ProductId { get; set; } = "";
+    public string Question { get; set; } = "";
 }

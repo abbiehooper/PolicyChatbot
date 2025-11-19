@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.ResponseCompression;
+using PolicyChatbot.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<PolicyRepository>();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
