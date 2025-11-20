@@ -10,13 +10,11 @@ namespace PolicyChatbot.Server.Controllers;
 public class PolicyController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
     private readonly IPolicyRepository _policyRepository;
 
     public PolicyController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IPolicyRepository policyRepository)
     {
         _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
         _policyRepository = policyRepository;
     }
 
@@ -55,7 +53,20 @@ public class PolicyController : ControllerBase
     {
         var httpClient = _httpClientFactory.CreateClient("Anthropic");
 
-        var systemPrompt = $@"You are a helpful insurance policy assistant. You ONLY answer questions about the specific insurance policy provided below.
+        var systemPrompt = BuildSystemPrompt(policyContent);
+        var requestBody = BuildClaudeRequest(question, systemPrompt);
+
+        var response = await httpClient.PostAsJsonAsync("messages", requestBody);
+        var jsonResponse = await response.Content.ReadAsStringAsync();
+
+        var doc = JsonDocument.Parse(jsonResponse);
+        var content = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString();
+
+        return content ?? "Sorry, I couldn't process that request.";
+    }
+
+    private static string BuildSystemPrompt(string policyContent) =>
+        $@"You are a helpful insurance policy assistant. You ONLY answer questions about the specific insurance policy provided below.
 
             POLICY DOCUMENT:
             {policyContent}
@@ -67,7 +78,8 @@ public class PolicyController : ControllerBase
             - Quote relevant policy sections when appropriate
             - If asked about topics not in the policy, politely redirect to policy-related questions";
 
-        var requestBody = new
+    private static object BuildClaudeRequest(string question, string systemPrompt) =>
+        new
         {
             model = "claude-sonnet-4-20250514",
             max_tokens = 1024,
@@ -77,13 +89,4 @@ public class PolicyController : ControllerBase
                 new { role = "user", content = question }
             }
         };
-
-        var response = await httpClient.PostAsJsonAsync("messages", requestBody);
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-
-        var doc = JsonDocument.Parse(jsonResponse);
-        var content = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString();
-
-        return content ?? "Sorry, I couldn't process that request.";
-    }
 }
