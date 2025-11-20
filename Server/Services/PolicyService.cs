@@ -5,7 +5,7 @@ using UglyToad.PdfPig.Content;
 
 namespace PolicyChatbot.Server.Services;
 
-public interface IPolicyRepository
+public interface IPolicyService
 {
     /// <summary>
     /// Retrieves a list of available insurance types.
@@ -40,12 +40,12 @@ public interface IPolicyRepository
     string? GetPolicyContent(string productId);
 }
 
-public class PolicyRepository : IPolicyRepository
+public class PolicyService : IPolicyService
 {
     private readonly string _policyPath;
-    private readonly ILogger<PolicyRepository> _logger;
+    private readonly ILogger<PolicyService> _logger;
 
-    public PolicyRepository(IWebHostEnvironment env, ILogger<PolicyRepository> logger)
+    public PolicyService(IWebHostEnvironment env, ILogger<PolicyService> logger)
     {
         _policyPath = Path.Combine(env.ContentRootPath, "PolicyDocuments");
         _logger = logger;

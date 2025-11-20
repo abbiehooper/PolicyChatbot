@@ -7,15 +7,15 @@ namespace PolicyChatbot.Client.Pages;
 
 public partial class Chatbot
 {
-    private List<string> insuranceTypes = new();
-    private List<string> availableInsurers = new();
-    private List<ProductInfo> availableProducts = new();
+    private List<string> insuranceTypes = [];
+    private List<string> availableInsurers = [];
+    private List<ProductInfo> availableProducts = [];
 
     private string selectedInsuranceType = "";
     private string selectedInsurer = "";
     private string selectedProductId = "";
 
-    private List<ChatMessage> chatMessages = new();
+    private readonly List<ChatMessage> chatMessages = [];
     private string userInput = "";
     private bool isLoading = false;
     private string errorMessage = "";
@@ -24,7 +24,7 @@ public partial class Chatbot
     {
         try
         {
-            insuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? new();
+            insuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? [];
         }
         catch (Exception ex)
         {
@@ -96,7 +96,7 @@ public partial class Chatbot
                 Question = question
             };
 
-            var response = await Http.PostAsJsonAsync("api/policy/chat", request);
+            var response = await Http.PostAsJsonAsync("api/chatbot/chat", request);
 
             if (response.IsSuccessStatusCode)
             {
