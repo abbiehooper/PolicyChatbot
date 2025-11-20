@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.ResponseCompression;
+using MudBlazor.Services;
 using PolicyChatbot.Server.Services;
 using PolicyChatbot.Server.Startup;
 
@@ -31,6 +32,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.MapRazorPages();
 app.MapControllers();
+app.MapStaticAssets();
 app.MapFallbackToFile("index.html");
 
 app.Run();
