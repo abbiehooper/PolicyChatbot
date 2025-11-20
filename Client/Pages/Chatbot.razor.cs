@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using PolicyChatbot.Shared;
+using PolicyChatbot.Shared.Models;
 using System.Net.Http.Json;
 
 namespace PolicyChatbot.Client.Pages;

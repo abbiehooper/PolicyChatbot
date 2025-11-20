@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PolicyChatbot.Server.Services;
 using PolicyChatbot.Shared;
+using PolicyChatbot.Shared.Models;
 using System.Text.Json;
 
 namespace PolicyChatbot.Server.Controllers;

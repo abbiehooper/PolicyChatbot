@@ -1,4 +1,5 @@
 ﻿using PolicyChatbot.Shared;
+using PolicyChatbot.Shared.Models;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
@@ -48,7 +49,7 @@ public class PolicyRepository
 
     public List<ProductInfo> GetProducts(string insuranceType, string insurer)
     {
-        var insurerPath = Path.Combine(_policyPath, insuranceType, insurer);
+        string? insurerPath = Path.Combine(_policyPath, insuranceType, insurer);
 
         if (!Directory.Exists(insurerPath))
             return new List<ProductInfo>();
