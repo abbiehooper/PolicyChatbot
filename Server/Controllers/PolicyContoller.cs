@@ -7,16 +7,10 @@ namespace PolicyChatbot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PolicyController : ControllerBase
+public class PolicyController(IHttpClientFactory httpClientFactory, IPolicyRepository policyRepository) : ControllerBase
 {
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IPolicyRepository _policyRepository;
-
-    public PolicyController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IPolicyRepository policyRepository)
-    {
-        _httpClientFactory = httpClientFactory;
-        _policyRepository = policyRepository;
-    }
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+    private readonly IPolicyRepository _policyRepository = policyRepository;
 
     [HttpGet("insurance-types")]
     public ActionResult<List<string>> GetInsuranceTypes()
