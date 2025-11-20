@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using PolicyChatbot.Server.Services;
+using PolicyChatbot.Server.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
+var services = builder.Services;
 
-builder.Services.AddControllersWithViews();
-builder.Services.AddRazorPages();
-builder.Services.AddHttpClient();
-builder.Services.AddSingleton<PolicyRepository>();
-builder.Services.AddControllers();
+services.AddControllers();
+services.AddDependencyInjection(configuration)
+        .AddAnthropicApiClient(configuration)
+        .AddHttpClient()
+        .AddRazorPages();
 
 var app = builder.Build();
 
@@ -23,13 +26,9 @@ else
 }
 
 app.UseHttpsRedirection();
-
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
-
 app.UseRouting();
-
-
 app.MapRazorPages();
 app.MapControllers();
 app.MapFallbackToFile("index.html");

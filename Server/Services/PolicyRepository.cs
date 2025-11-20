@@ -5,7 +5,42 @@ using UglyToad.PdfPig.Content;
 
 namespace PolicyChatbot.Server.Services;
 
-public class PolicyRepository
+public interface IPolicyRepository
+{
+    /// <summary>
+    /// Retrieves a list of available insurance types.
+    /// </summary>
+    /// <returns>A list of strings representing the names of the available insurance types.  The list will be empty if no
+    /// insurance types are available.</returns>
+    List<string> GetInsuranceTypes();
+
+    /// <summary>
+    /// Retrieves a list of insurers that provide coverage for the specified insurance type.
+    /// </summary>
+    /// <param name="insuranceType">The type of insurance to filter insurers by. For example, "Car", "Home", or "Van".</param>
+    /// <returns>A list of insurer names that offer the specified type of insurance. The list will be empty if no matching
+    /// insurers are found.</returns>
+    List<string> GetInsurers(string insuranceType);
+
+    /// <summary>
+    /// Retrieves a list of products based on the specified insurance type and insurer.
+    /// </summary>
+    /// <param name="insuranceType">The type of insurance to filter products by. This value cannot be null or empty.</param>
+    /// <param name="insurer">The name of the insurer to filter products by. This value cannot be null or empty.</param>
+    /// <returns>A list of <see cref="ProductInfo"/> objects that match the specified criteria. Returns an empty list if no
+    /// products are found.</returns>
+    List<ProductInfo> GetProducts(string insuranceType, string insurer);
+
+    /// <summary>
+    /// Retrieves the policy content associated with the specified product identifier.
+    /// </summary>
+    /// <param name="productId">The unique identifier of the product for which the policy content is requested. Cannot be null or empty.</param>
+    /// <returns>The policy content as a string if the product identifier is valid and a policy exists; otherwise, <see
+    /// langword="null"/>.</returns>
+    string? GetPolicyContent(string productId);
+}
+
+public class PolicyRepository : IPolicyRepository
 {
     private readonly string _policyPath;
     private readonly ILogger<PolicyRepository> _logger;
@@ -23,10 +58,11 @@ public class PolicyRepository
         }
     }
 
+    /// <inheritdoc/>
     public List<string> GetInsuranceTypes()
     {
         if (!Directory.Exists(_policyPath))
-            return new List<string>();
+            return [];
 
         return Directory.GetDirectories(_policyPath)
             .Select(d => Path.GetFileName(d))
@@ -34,6 +70,7 @@ public class PolicyRepository
             .ToList()!;
     }
 
+    /// <inheritdoc/>
     public List<string> GetInsurers(string insuranceType)
     {
         var typePath = Path.Combine(_policyPath, insuranceType);
@@ -47,6 +84,7 @@ public class PolicyRepository
             .ToList()!;
     }
 
+    /// <inheritdoc/>
     public List<ProductInfo> GetProducts(string insuranceType, string insurer)
     {
         string? insurerPath = Path.Combine(_policyPath, insuranceType, insurer);
@@ -69,6 +107,7 @@ public class PolicyRepository
             .ToList();
     }
 
+    /// <inheritdoc/>
     public string? GetPolicyContent(string productId)
     {
         try
@@ -102,6 +141,7 @@ public class PolicyRepository
         }
     }
 
+    /// <inheritdoc/>
     private string ExtractTextFromPdf(string pdfPath)
     {
         try

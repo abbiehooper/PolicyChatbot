@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PolicyChatbot.Server.Services;
-using PolicyChatbot.Shared;
 using PolicyChatbot.Shared.Models;
 using System.Text.Json;
 
@@ -12,49 +11,49 @@ public class PolicyController : ControllerBase
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
-    private readonly PolicyRepository _policyRepo;
+    private readonly IPolicyRepository _policyRepository;
 
-    public PolicyController(IHttpClientFactory httpClientFactory, IConfiguration configuration, PolicyRepository policyRepo)
+    public PolicyController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IPolicyRepository policyRepository)
     {
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
-        _policyRepo = policyRepo;
+        _policyRepository = policyRepository;
     }
 
     [HttpGet("insurance-types")]
     public ActionResult<List<string>> GetInsuranceTypes()
     {
-        return Ok(_policyRepo.GetInsuranceTypes());
+        return Ok(_policyRepository.GetInsuranceTypes());
     }
 
     [HttpGet("insurers")]
     public ActionResult<List<string>> GetInsurers([FromQuery] string insuranceType)
     {
-        return Ok(_policyRepo.GetInsurers(insuranceType));
+        return Ok(_policyRepository.GetInsurers(insuranceType));
     }
 
     [HttpGet("products")]
     public ActionResult<List<ProductInfo>> GetProducts([FromQuery] string insuranceType, [FromQuery] string insurer)
     {
-        return Ok(_policyRepo.GetProducts(insuranceType, insurer));
+        return Ok(_policyRepository.GetProducts(insuranceType, insurer));
     }
 
     [HttpPost("chat")]
     public async Task<ActionResult<ChatResponse>> Chat([FromBody] ChatRequest request)
     {
-        var policy = _policyRepo.GetPolicyContent(request.ProductId);
+        var policy = _policyRepository.GetPolicyContent(request.ProductId);
 
         if (policy == null)
             return NotFound("Policy not found");
 
-        var answer = await GetClaudeResponse(request.Question, policy);
+        var answer = await GetClaudeResponseAsync(request.Question, policy);
 
         return Ok(new ChatResponse { Answer = answer });
     }
 
-    private async Task<string> GetClaudeResponse(string question, string policyContent)
+    private async Task<string> GetClaudeResponseAsync(string question, string policyContent)
     {
-        var apiKey = _configuration["Anthropic:ApiKey"];
+        var httpClient = _httpClientFactory.CreateClient("Anthropic");
 
         var systemPrompt = $@"You are a helpful insurance policy assistant. You ONLY answer questions about the specific insurance policy provided below.
 
@@ -75,20 +74,11 @@ public class PolicyController : ControllerBase
             system = systemPrompt,
             messages = new[]
             {
-            new { role = "user", content = question }
-        }
+                new { role = "user", content = question }
+            }
         };
 
-        var client = _httpClientFactory.CreateClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages")
-        {
-            Content = JsonContent.Create(requestBody)
-        };
-
-        request.Headers.Add("x-api-key", apiKey);
-        request.Headers.Add("anthropic-version", "2023-06-01");
-
-        var response = await client.SendAsync(request);
+        var response = await httpClient.PostAsJsonAsync("messages", requestBody);
         var jsonResponse = await response.Content.ReadAsStringAsync();
 
         var doc = JsonDocument.Parse(jsonResponse);
