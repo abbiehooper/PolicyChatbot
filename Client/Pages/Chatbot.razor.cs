@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using PolicyChatbot.Shared.Models;
 using System.Net.Http.Json;
 
@@ -15,7 +16,7 @@ public partial class Chatbot
     private string selectedInsurer = "";
     private string selectedProductId = "";
 
-    private readonly List<ChatMessage> chatMessages = [];
+    private List<ChatMessage> chatMessages = [];
     private string userInput = "";
     private bool isLoading = false;
     private string errorMessage = "";
@@ -24,7 +25,7 @@ public partial class Chatbot
     {
         try
         {
-            insuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? [];
+            insuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? new();
         }
         catch (Exception ex)
         {
@@ -32,9 +33,9 @@ public partial class Chatbot
         }
     }
 
-    private async Task OnInsuranceTypeChanged(ChangeEventArgs e)
+    private async Task OnInsuranceTypeChanged(string value)
     {
-        selectedInsuranceType = e.Value?.ToString() ?? "";
+        selectedInsuranceType = value;
         selectedInsurer = "";
         selectedProductId = "";
         availableInsurers.Clear();
@@ -55,9 +56,9 @@ public partial class Chatbot
         }
     }
 
-    private async Task OnInsurerChanged(ChangeEventArgs e)
+    private async Task OnInsurerChanged(string value)
     {
-        selectedInsurer = e.Value?.ToString() ?? "";
+        selectedInsurer = value;
         selectedProductId = "";
         availableProducts.Clear();
         chatMessages.Clear();
@@ -119,6 +120,7 @@ public partial class Chatbot
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 
@@ -128,5 +130,20 @@ public partial class Chatbot
         {
             _ = SendMessage();
         }
+    }
+
+    private string GetMessageStyle(bool isUser)
+    {
+        return isUser
+            ? "background-color: #e3f2fd; margin-left: 20%;"
+            : "background-color: #ffffff; margin-right: 20%;";
+    }
+
+    private string GetLabel()
+    {
+        if(string.IsNullOrEmpty(selectedProductId))
+            return "Select an insurance product to start chatting";
+
+        return $"Ask a question about {selectedProductId}";
     }
 }
