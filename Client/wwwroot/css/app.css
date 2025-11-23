@@ -97,3 +97,22 @@ a, .btn-link {
     .loading-progress-text:after {
         content: var(--blazor-load-percentage-text, "Loading");
     }
+
+.message {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 5px;
+}
+
+.user {
+    margin-left: 20%;
+    text-align: right;
+    background-color: var(--mud-palette-primary-darken) !important;
+    color: white !important;
+}
+
+.bot {
+    margin-right: 20%;
+    text-align: left;
+    background-color: var(--mud-palette-action-default-hover) !important;
+}

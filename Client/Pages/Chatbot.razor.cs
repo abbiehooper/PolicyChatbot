@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using PolicyChatbot.Shared.Models;
 using System.Net.Http.Json;
 
@@ -132,11 +131,12 @@ public partial class Chatbot
         }
     }
 
-    private string GetMessageStyle(bool isUser)
+    private static 
+        string GetMessageClass(bool isUser)
     {
         return isUser
-            ? "background-color: #e3f2fd; margin-left: 20%;"
-            : "background-color: #ffffff; margin-right: 20%;";
+            ? "user message"
+            : "bot message";
     }
 
     private string GetLabel()

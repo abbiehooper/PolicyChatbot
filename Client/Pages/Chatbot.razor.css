@@ -1,13 +1,49 @@
-﻿.user-message {
-    text-align: right;
-    background-color: #e3f2fd;
-    padding: 10px;
-    border-radius: 5px;
+﻿.mud--container {
+    display: flex;
+    height: 100%;
 }
 
-.bot-message {
-    text-align: left;
-    background-color: #fff;
-    padding: 10px;
-    border-radius: 5px;
+.mud--container ::deep .chatbot-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+}
+
+.mud--container ::deep .chatbot-title {
+    flex-shrink: 0;
+    margin-bottom: 1.5rem;
+}
+
+.mud--container ::deep .select-policy-card {
+    flex-shrink: 0;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.mud--container ::deep .chat-messages-card {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0
+}
+
+.mud--container ::deep .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 16px;
+    height: 100%;
+}
+
+.mud--container ::deep .chat-input-section {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 16px;
+    height: 100%;
+    padding: 1.5rem;
 }
