@@ -6,7 +6,8 @@
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="chatbot-container" Style="display: flex;
     flex-direction: column;
-    flex: 1;">
+    flex: 1;
+    height: 100%;">
 
     <MudText Typo="Typo.h4" Class="mb-4" Style="flex-shrink: 0;">Policy Expert</MudText>
 
@@ -52,7 +53,8 @@
         overflow-y: auto;
         overflow-x: hidden;
         margin-bottom: 16px;
-        padding: 16px;">
+        padding: 16px;
+        height: 100%">
             @foreach (var msg in chatMessages)
             {
                 <MudPaper Elevation="1" Class="pa-3 mb-3" Style="@GetMessageStyle(msg.IsUser)">

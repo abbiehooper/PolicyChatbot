@@ -5,8 +5,10 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout Style="height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
-    <MudMainContent Style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding-top: 1rem;">
-        @Body
-    </MudMainContent>
-</MudLayout>
+<div class="mud--container">
+    <MudLayout Class="mud-layout-style">
+        <MudMainContent Class="mud-main-content-style">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+</div>
