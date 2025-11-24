@@ -52,7 +52,11 @@ public class ChatbotService(IHttpClientFactory httpClientFactory) : IChatbotServ
             - If the policy doesn't mention something, clearly state 'This policy does not specify information about [topic]'
             - Be concise and specific
             - Quote relevant policy sections when appropriate
-            - If asked about topics not in the policy, politely redirect to policy-related questions";
+            - If asked about topics not in the policy, politely redirect to policy-related questions
+            
+            FORMATTING: 
+            - Whenever you are quoting the policy wording the text should be in italics
+        ";
 
     /// <summary>
     /// Constructs a request object for interacting with the Claude AI system.

@@ -1,86 +1,127 @@
 ﻿@page "/"
 @using System.Net.Http.Json
-@using PolicyChatbot.Client.Components
+
 @inject HttpClient Http
 
 <PageTitle>Policy Expert</PageTitle>
 
 <div class="mud--container">
     <MudContainer MaxWidth="MaxWidth.Medium" Class="chatbot-container">
-        <MudText Typo="Typo.h4" Class="chatbot-title">Policy Expert</MudText>
-        <MudPaper Class="select-policy-card" Outlined="true">
-            <MudGrid>
-                <MudItem xs="12" md="4">
-                    <MudSelect T="string" Label="Insurance Type" Variant="Variant.Outlined"
-                               Value="@selectedInsuranceType" ValueChanged="OnInsuranceTypeChanged">
-                        @foreach (var type in insuranceTypes)
-                        {
-                            <MudSelectItem T="string" Value="@type">@type</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
 
-                <MudItem xs="12" md="4">
-                    <MudSelect T="string" Label="Insurer" Variant="Variant.Outlined"
-                               Value="@selectedInsurer" ValueChanged="OnInsurerChanged"
-                               Disabled="@(string.IsNullOrEmpty(selectedInsuranceType))">
-                        @foreach (var insurer in availableInsurers)
-                        {
-                            <MudSelectItem T="string" Value="@insurer">@insurer</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
+        @* Select a policy area *@
+        @if (string.IsNullOrEmpty(selectedProductId))
+        {
+            <MudContainer Class="welcome-container">
+                <MudText Typo="Typo.h4" Color="Color.Primary" Class="greeting">Let me handle the fine print. Which policy are we checking today?</MudText>
+                <MudPaper Class="select-policy-card" Elevation=0 Outlined="false">
+                    <MudGrid>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" Label="Policy Type" Variant="Variant.Text"
+                                       Value="@selectedInsuranceType" ValueChanged="OnInsuranceTypeChanged">
+                                @foreach (var type in insuranceTypes)
+                                {
+                                    <MudSelectItem T="string" Value="@type">@type</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
 
-                <MudItem xs="12" md="4">
-                    <MudSelect T="string" Label="Product" Variant="Variant.Outlined"
-                               @bind-Value="selectedProductId"
-                               Disabled="@(string.IsNullOrEmpty(selectedInsurer))">
-                        @foreach (var product in availableProducts)
-                        {
-                            <MudSelectItem T="string" Value="@product.Id">@product.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" Label="Insurer"
+                                       Variant="Variant.Text"
+                                       Value="@selectedInsurer"
+                                       ValueChanged="OnInsurerChanged"
+                                       Disabled="@(string.IsNullOrEmpty(selectedInsuranceType))">
+                                @foreach (var insurer in availableInsurers)
+                                {
+                                    <MudSelectItem T="string" Value="@insurer">@insurer</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
 
-        <MudPaper Class="chat-messages-card" Outlined="true">
-            <MudPaper Elevation="0" Class="chat-messages">
-                @foreach (var msg in chatMessages)
-                {
-                    <MudPaper Elevation="1" Class=@GetMessageClass(msg.IsUser)>
-                        <MudText Typo="Typo.subtitle2" Class="mb-1">
-                            <strong>@(msg.IsUser ? "You" : "Policy Expert")</strong>
-                        </MudText>
-                        <MudText Typo="Typo.body2">@msg.Content</MudText>
-                    </MudPaper>
-                }
+                        <MudItem xs="12" md="4">
+                            <MudSelect T="string" Label="Product" Variant="Variant.Text"
+                                       @bind-Value="selectedProductId"
+                                       Disabled="@(string.IsNullOrEmpty(selectedInsurer))">
+                                @foreach (var product in availableProducts)
+                                {
+                                    <MudSelectItem T="string" Value="@product.Id">@product.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudContainer>
+        }
 
-                @if (isLoading)
-                {
-                    <TypingIndicator/>
-                }
+        @* Chat message area *@
+        @if (chatMessages.Count > 0)
+        {
+            <MudPaper Class="chat-messages-card" Elevation=0 Outlined=false>
+                <MudPaper Elevation="0" Class="chat-messages" id="scrollContainer">
+                    @foreach (var message in chatMessages)
+                    {
+                        <MudPaper Elevation=0 Class=@GetMessageClass(message.IsUser)>
+                            @if (message.IsUser)
+                            {
+                                <MudText Typo="Typo.subtitle2" Class="mb-1">
+                                    <strong>You</strong>
+                                </MudText>
+                            }
+                            @((MarkupString)Markdown.ToHtml(message.Content))
+                        </MudPaper>
+                    }
 
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <MudAlert Severity="Severity.Error">@errorMessage</MudAlert>
-                }
+                    @if (isLoading)
+                    {
+                        <TypingIndicator />
+                    }
 
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <MudPaper Elevation=0 Class="bot message">
+                            <MudText Typo="Typo.body2">@errorMessage</MudText>
+                        </MudPaper>
+                    }
+
+                </MudPaper>
+
+                <MudGrid Class="flex-shrink-0">
+                    <MudItem xs="12">
+                        <EditForm Model="@this" OnSubmit="@SendMessage">
+                            <MudTextField @bind-Value="userInput"
+                                          id="userInputId"
+                                          Label="Ask Policy Expert"
+                                          Variant="Variant.Outlined"
+                                          Disabled="@(isLoading || string.IsNullOrEmpty(selectedProductId))"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@Icons.Material.Filled.Send"
+                                          OnAdornmentClick="SendMessage"
+                                          AdornmentColor="Color.Primary"
+                                          FullWidth=true />
+                        </EditForm>
+                    </MudItem>
+                </MudGrid>
             </MudPaper>
+        }
 
-            <MudGrid Class="flex-shrink-0">
-                <MudItem xs="12">
+        @* Policy Selected - First message *@
+        @if (!string.IsNullOrEmpty(selectedProductId) && chatMessages.Count == 0)
+        {
+            <MudContainer Class="welcome-container">
+                <MudText Typo="Typo.h4" Color="Color.Primary" Class="greeting">I'm ready to help. Ask me anything about the @SelectedProductName wording.</MudText>
+                <EditForm Model="@this" OnSubmit="@SendMessage">
                     <MudTextField @bind-Value="userInput"
-                                  Label=@GetLabel()
+                                  Label="Ask Policy Expert"
                                   Variant="Variant.Outlined"
                                   Disabled="@(isLoading || string.IsNullOrEmpty(selectedProductId))"
-                                  OnKeyDown="HandleKeyPress"
                                   Adornment="Adornment.End"
                                   AdornmentIcon="@Icons.Material.Filled.Send"
                                   OnAdornmentClick="SendMessage"
-                                  AdornmentColor="Color.Primary" />
-                </MudItem>
-            </MudGrid>
-        </MudPaper>
+                                  AdornmentColor="Color.Primary"
+                                  FullWidth=true />
+                </EditForm>
+            </MudContainer>
+        }
+
     </MudContainer>
 </div>

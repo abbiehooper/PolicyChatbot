@@ -3,52 +3,65 @@
     height: 100%;
 }
 
-.mud--container ::deep .chatbot-container {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    height: 100%;
-}
-
-.mud--container ::deep .chatbot-title {
-    flex-shrink: 0;
-    margin-bottom: 1.5rem;
-}
-
-.mud--container ::deep .select-policy-card {
-    flex-shrink: 0;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.mud--container ::deep .chat-messages-card {
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0
-}
-
-.mud--container ::deep .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin-bottom: 16px;
-    height: 100%;
-}
-
-.mud--container ::deep .chat-input-section {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    margin-bottom: 16px;
-    height: 100%;
-    padding: 1.5rem;
-}
-
 .mud--container {
     display: flex;
     height: 100%;
 }
+
+    .mud--container ::deep .chatbot-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        height: 100%;
+    }
+
+    .mud--container ::deep .chatbot-title {
+        flex-shrink: 0;
+        margin-bottom: 1.5rem;
+    }
+
+    .mud--container ::deep .select-policy-card {
+        flex-shrink: 0;
+        margin-bottom: 1.5rem;
+        width: 100%;
+    }
+
+    .mud--container ::deep .chat-messages-card {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0
+    }
+
+    .mud--container ::deep .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-bottom: 16px;
+        height: 100%;
+    }
+
+    .mud--container ::deep .chat-input-section {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        margin-bottom: 16px;
+        height: 100%;
+        padding: 1.5rem;
+    }
+
+    .mud--container ::deep .welcome-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        margin: 0 auto;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .mud--container ::deep .greeting {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }

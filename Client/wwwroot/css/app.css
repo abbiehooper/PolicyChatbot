@@ -1,5 +1,9 @@
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Inter', Helvetica, Arial, sans-serif;
+}
+
+form {
+    width: 100%;
 }
 
 h1:focus {
@@ -99,20 +103,32 @@ a, .btn-link {
     }
 
 .message {
-    padding: 1rem;
     margin-bottom: 1rem;
-    border-radius: 5px;
 }
 
 .user {
-    margin-left: 20%;
-    text-align: right;
-    background-color: var(--mud-palette-primary-darken) !important;
-    color: white !important;
+    background-color: var(--mud-palette-action-default-hover) !important;
+    padding: 0.75rem;
 }
 
 .bot {
-    margin-right: 20%;
-    text-align: left;
-    background-color: var(--mud-palette-action-default-hover) !important;
+    padding: 0px 5px;
+}
+
+ul {
+    list-style-type: disc;
+    margin: 0.5rem 0rem;
+}
+
+ol {
+    margin: 0.5rem 0rem;
+}
+
+li {
+    margin-left: 1rem;
+    display: list-item;
+}
+
+p {
+    margin-bottom: 0.5rem;
 }

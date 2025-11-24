@@ -1,14 +1,45 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager;
 
-<MudThemeProvider />
+<MudThemeProvider Theme="MyCustomTheme"/>
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <div class="mud--container">
     <MudLayout Class="mud-layout-style">
+        <MudAppBar Elevation="1">
+            <MudText Typo="Typo.h6" Style="font-weight: bold;">Policy</MudText>
+            <MudText Typo="Typo.h6" Style="font-weight: 300;">Expert</MudText>
+            <MudSpacer />
+            <MudIconButton 
+                Icon="@Icons.Material.Filled.Add" 
+                Color="Color.Inherit" 
+                Edge="Edge.End"
+                title="New Chat" />
+        </MudAppBar>
         <MudMainContent Class="mud-main-content-style">
             @Body
         </MudMainContent>
     </MudLayout>
 </div>
+
+@code {
+    MudTheme MyCustomTheme = new MudTheme()
+    {
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography()
+            {
+                FontFamily = new[] { "Inter", "Helvetica", "Arial", "sans-serif" },
+            },
+            H4 = new H6Typography()
+            {
+                FontWeight = "500",
+                FontSize = "2rem",
+                LineHeight="1.235",
+                LetterSpacing = ".00735em",
+            },
+        },
+    };
+}

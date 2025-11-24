@@ -1,12 +1,19 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using PolicyChatbot.Shared.Models;
 using System.Net.Http.Json;
+using System.Reflection.Metadata;
+using static MudBlazor.CategoryTypes;
 
 namespace PolicyChatbot.Client.Pages;
 
 public partial class Chatbot
 {
+
+    [Inject]
+    public required IJSRuntime JS { get; set; }
+
     private List<string> insuranceTypes = [];
     private List<string> availableInsurers = [];
     private List<ProductInfo> availableProducts = [];
@@ -15,10 +22,13 @@ public partial class Chatbot
     private string selectedInsurer = "";
     private string selectedProductId = "";
 
-    private List<ChatMessage> chatMessages = [];
+    private readonly List<ChatMessage> chatMessages = [];
     private string userInput = "";
     private bool isLoading = false;
     private string errorMessage = "";
+
+    private string SelectedProductName =>
+        availableProducts.Find(p => p.Id == selectedProductId)?.Name ?? "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,6 +40,11 @@ public partial class Chatbot
         {
             errorMessage = $"Failed to load insurance types: {ex.Message}";
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("scrollToBottomById", "scrollContainer");
     }
 
     private async Task OnInsuranceTypeChanged(string value)
@@ -120,14 +135,7 @@ public partial class Chatbot
         {
             isLoading = false;
             StateHasChanged();
-        }
-    }
-
-    private void HandleKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !isLoading)
-        {
-            _ = SendMessage();
+            await JS.InvokeVoidAsync("focusById", "userInputId");
         }
     }
 
@@ -137,13 +145,5 @@ public partial class Chatbot
         return isUser
             ? "user message"
             : "bot message";
-    }
-
-    private string GetLabel()
-    {
-        if(string.IsNullOrEmpty(selectedProductId))
-            return "Select an insurance product to start chatting";
-
-        return $"Ask a question about {selectedProductId}";
     }
 }
