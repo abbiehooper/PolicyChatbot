@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PolicyChatbot.Server.Services;
 using PolicyChatbot.Shared.Models;
-using System.Text.Json;
 
 namespace PolicyChatbot.Server.Controllers;
 
@@ -27,5 +26,17 @@ public class PolicyController(IPolicyService policyService) : ControllerBase
     public ActionResult<List<ProductInfo>> GetProducts([FromQuery] string insuranceType, [FromQuery] string insurer)
     {
         return Ok(_policyService.GetProducts(insuranceType, insurer));
+    }
+
+    [HttpGet("pdf/{productId}")]
+    public IActionResult GetPdf(string productId)
+    {
+        var pdfPath = _policyService.GetPdfPath(productId);
+        
+        if (pdfPath == null)
+            return NotFound("PDF not found");
+
+        var fileBytes = System.IO.File.ReadAllBytes(pdfPath);
+        return File(fileBytes, "application/pdf");
     }
 }

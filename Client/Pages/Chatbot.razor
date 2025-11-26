@@ -1,83 +1,114 @@
-﻿@page "/"
+@page "/"
 @using System.Net.Http.Json
+@using System.Text.RegularExpressions
+@using PolicyChatbot.Shared.Models
 <PageTitle>Policy Expert</PageTitle>
 
-<div class="mud--container">
-    <MudContainer MaxWidth="MaxWidth.Medium" Class="chatbot-container">
+<div class="page-container @(AppStateManager.IsPdfViewerOpen ? "split-view" : "")">
+    @* Left side - Chat *@
+    <div class="chat-side">
+        <MudContainer MaxWidth="MaxWidth.Medium" Class="chatbot-container">
+            <PolicySelection />
 
-        <PolicySelection />
+            @* Chat message area *@
+            @if (AppStateManager.ChatMessages.Count > 0)
+            {
+                <MudPaper Class="chat-messages-card" Elevation=0 Outlined=false>
+                    <MudPaper Elevation="0" Class="chat-messages" id="scrollContainer">
+                        @foreach (var message in AppStateManager.ChatMessages)
+                        {
+                            <MudPaper Elevation=0 Class=@GetMessageClass(message.IsUser)>
+                                @if (message.IsUser)
+                                {
+                                    <MudText Typo="Typo.subtitle2" Class="mb-1">
+                                        <strong>You</strong>
+                                    </MudText>
+                                    @((MarkupString)Markdown.ToHtml(message.Content))
+                                }
+                                else
+                                {
+                                    @* Bot message with citations *@
+                                    @((MarkupString)RenderMessageWithCitations(message))
+                                    
+                                    @if (message.Citations.Count > 0)
+                                    {
+                                        <div class="citations-bar">
+                                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mr-2">
+                                                Sources:
+                                            </MudText>
+                                            @foreach (var citation in message.Citations)
+                                            {
+                                                <CitationChip Citation="citation" 
+                                                              OnCitationClick="HandleCitationClick" />
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </MudPaper>
+                        }
 
-        @* Chat message area *@
-        @if (AppStateManager.ChatMessages.Count > 0)
-        {
-            <MudPaper Class="chat-messages-card" Elevation=0 Outlined=false>
-                <MudPaper Elevation="0" Class="chat-messages" id="scrollContainer">
-                    @foreach (var message in AppStateManager.ChatMessages)
-                    {
-                        <MudPaper Elevation=0 Class=@GetMessageClass(message.IsUser)>
-                            @if (message.IsUser)
-                            {
-                                <MudText Typo="Typo.subtitle2" Class="mb-1">
-                                    <strong>You</strong>
-                                </MudText>
-                            }
-                            @((MarkupString)Markdown.ToHtml(message.Content))
-                        </MudPaper>
-                    }
+                        @if (isLoading)
+                        {
+                            <TypingIndicator />
+                        }
 
-                    @if (isLoading)
-                    {
-                        <TypingIndicator />
-                    }
+                        @if (!string.IsNullOrEmpty(AppStateManager.ErrorMessage))
+                        {
+                            <MudPaper Elevation=0 Class="bot message">
+                                <MudText Typo="Typo.body2">@AppStateManager.ErrorMessage</MudText>
+                            </MudPaper>
+                        }
+                    </MudPaper>
 
-                    @if (!string.IsNullOrEmpty(AppStateManager.ErrorMessage))
-                    {
-                        <MudPaper Elevation=0 Class="bot message">
-                            <MudText Typo="Typo.body2">@AppStateManager.ErrorMessage</MudText>
-                        </MudPaper>
-                    }
-
+                    <MudGrid Class="flex-shrink-0">
+                        <MudItem xs="12">
+                            <EditForm Model="@this" OnSubmit="@SendMessage">
+                                <MudTextField @bind-Value="userInput"
+                                              id="userInputId"
+                                              Label="Ask Policy Expert"
+                                              Variant="Variant.Outlined"
+                                              Disabled="@(isLoading || string.IsNullOrEmpty(AppStateManager.SelectedProductId))"
+                                              Adornment="Adornment.End"
+                                              AdornmentIcon="@Icons.Material.Filled.Send"
+                                              OnAdornmentClick="SendMessage"
+                                              AdornmentColor="Color.Primary"
+                                              FullWidth=true />
+                            </EditForm>
+                        </MudItem>
+                    </MudGrid>
                 </MudPaper>
+            }
 
-                <MudGrid Class="flex-shrink-0">
-                    <MudItem xs="12">
-                        <EditForm Model="@this" OnSubmit="@SendMessage">
-                            <MudTextField @bind-Value="userInput"
-                                          id="userInputId"
-                                          Label="Ask Policy Expert"
-                                          Variant="Variant.Outlined"
-                                          Disabled="@(isLoading || string.IsNullOrEmpty(AppStateManager.SelectedProductId))"
-                                          Adornment="Adornment.End"
-                                          AdornmentIcon="@Icons.Material.Filled.Send"
-                                          OnAdornmentClick="SendMessage"
-                                          AdornmentColor="Color.Primary"
-                                          FullWidth=true />
-                        </EditForm>
-                    </MudItem>
-                </MudGrid>
-            </MudPaper>
-        }
+            @* Policy Selected - First message *@
+            @if (!string.IsNullOrEmpty(AppStateManager.SelectedProductId) && AppStateManager.ChatMessages.Count == 0)
+            {
+                <MudContainer Class="welcome-container">
+                    <MudText Typo="Typo.h4" Color="Color.Primary" Class="greeting">
+                        I'm ready to help. Ask me anything about the @AppStateManager.SelectedProductName wording.
+                    </MudText>
+                    <EditForm Model="@this" OnSubmit="@SendMessage">
+                        <MudTextField @bind-Value="userInput"
+                                      Label="Ask Policy Expert"
+                                      Variant="Variant.Outlined"
+                                      Disabled="@(isLoading || string.IsNullOrEmpty(AppStateManager.SelectedProductId))"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Send"
+                                      OnAdornmentClick="SendMessage"
+                                      AdornmentColor="Color.Primary"
+                                      FullWidth=true />
+                    </EditForm>
+                </MudContainer>
+            }
+        </MudContainer>
+    </div>
 
-        @* Policy Selected - First message *@
-        @if (!string.IsNullOrEmpty(AppStateManager.SelectedProductId) && AppStateManager.ChatMessages.Count == 0)
-        {
-            <MudContainer Class="welcome-container">
-                <MudText Typo="Typo.h4" Color="Color.Primary" Class="greeting">
-                    I'm ready to help. Ask me anything about the @AppStateManager.SelectedProductName wording.
-                </MudText>
-                <EditForm Model="@this" OnSubmit="@SendMessage">
-                    <MudTextField @bind-Value="userInput"
-                                  Label="Ask Policy Expert"
-                                  Variant="Variant.Outlined"
-                                  Disabled="@(isLoading || string.IsNullOrEmpty(AppStateManager.SelectedProductId))"
-                                  Adornment="Adornment.End"
-                                  AdornmentIcon="@Icons.Material.Filled.Send"
-                                  OnAdornmentClick="SendMessage"
-                                  AdornmentColor="Color.Primary"
-                                  FullWidth=true />
-                </EditForm>
-            </MudContainer>
-        }
-
-    </MudContainer>
+    @* Right side - PDF Viewer *@
+    @if (AppStateManager.IsPdfViewerOpen)
+    {
+        <div class="pdf-side">
+            <PdfViewer Citation="AppStateManager.SelectedCitation"
+                       ProductId="@AppStateManager.SelectedProductId"
+                       OnClose="ClosePdfViewer" />
+        </div>
+    }
 </div>

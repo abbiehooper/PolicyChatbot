@@ -1,0 +1,24 @@
+@using PolicyChatbot.Shared.Models
+
+<MudChip T="string" 
+         Class="citation-chip"
+         Size="Size.Small" 
+         Color="Color.Primary"
+         Variant="Variant.Outlined"
+         Icon="@Icons.Material.Filled.OpenInNew"
+         OnClick="HandleClick">
+    Page @Citation.PageNumber
+</MudChip>
+
+@code {
+    [Parameter]
+    public required Citation Citation { get; set; }
+
+    [Parameter]
+    public EventCallback<Citation> OnCitationClick { get; set; }
+
+    private async Task HandleClick()
+    {
+        await OnCitationClick.InvokeAsync(Citation);
+    }
+}

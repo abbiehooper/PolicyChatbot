@@ -1,7 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using PolicyChatbot.Server.Services;
 using PolicyChatbot.Shared.Models;
-using System.Text.Json;
 
 namespace PolicyChatbot.Server.Controllers;
 
@@ -15,13 +14,13 @@ public class ChatbotController(IPolicyService policyService, IChatbotService cha
     [HttpPost("chat")]
     public async Task<ActionResult<ChatResponse>> Chat([FromBody] ChatRequest request)
     {
-        var policy = _policyService.GetPolicyContent(request.ProductId);
+        var policyContent = _policyService.GetPolicyContentWithPages(request.ProductId);
 
-        if (policy == null)
+        if (policyContent == null)
             return NotFound("Policy not found");
 
-        var answer = await _chatbotService.GetClaudeResponseAsync(request.Question, policy);
+        var response = await _chatbotService.GetClaudeResponseWithCitationsAsync(request.Question, policyContent);
 
-        return Ok(new ChatResponse { Answer = answer });
+        return Ok(response);
     }
 }

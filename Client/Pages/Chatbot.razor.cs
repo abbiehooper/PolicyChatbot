@@ -1,16 +1,14 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
+using Markdig;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using PolicyChatbot.Shared.Models;
 using System.Net.Http.Json;
-using System.Reflection.Metadata;
-using static MudBlazor.CategoryTypes;
+using System.Text.RegularExpressions;
 
 namespace PolicyChatbot.Client.Pages;
 
 public partial class Chatbot
 {
-
     [Inject]
     public required IJSRuntime JS { get; set; }
 
@@ -26,6 +24,7 @@ public partial class Chatbot
     protected override async Task OnInitializedAsync()
     {
         AppStateManager.OnProductSelectedAsync += RefreshAsync;
+        AppStateManager.OnCitationSelected += RefreshAsync;
 
         try
         {
@@ -53,7 +52,7 @@ public partial class Chatbot
         userInput = "";
         AppStateManager.ErrorMessage = "";
 
-        AddChatMessage(question, true);
+        AddChatMessage(question, true, []);
         isLoading = true;
 
         try
@@ -69,7 +68,15 @@ public partial class Chatbot
             if (response.IsSuccessStatusCode)
             {
                 var chatResponse = await response.Content.ReadFromJsonAsync<ChatResponse>();
-                AddChatMessage(chatResponse?.Answer ?? "No response received", false);
+                if (chatResponse != null)
+                {
+                    AddChatMessage(chatResponse.Answer, false, chatResponse.Citations);
+                    AppStateManager.CurrentCitations = chatResponse.Citations;
+                }
+                else
+                {
+                    AddChatMessage("No response received", false, []);
+                }
             }
             else
             {
@@ -88,7 +95,40 @@ public partial class Chatbot
         }
     }
 
-    private void AddChatMessage(string content, bool isUser) => AppStateManager.ChatMessages.Add(new ChatMessage { Content = content, IsUser = isUser });
+    private void AddChatMessage(string content, bool isUser, List<Citation> citations) => 
+        AppStateManager.ChatMessages.Add(new ChatMessage 
+        { 
+            Content = content, 
+            IsUser = isUser,
+            Citations = citations
+        });
 
     private static string GetMessageClass(bool isUser) => isUser ? "user message" : "bot message";
+
+    private static string RenderMessageWithCitations(ChatMessage message)
+    {
+        var html = Markdown.ToHtml(message.Content);
+
+        // Replace citation markers with styled spans
+        var citationPattern = new Regex(@"<cite data-citation=""(\d+)"">\[(\d+)\]</cite>");
+        html = citationPattern.Replace(html, match =>
+        {
+            var index = match.Groups[1].Value;
+            return $"<span class=\"citation-marker\" data-citation=\"{index}\">[{index}]</span>";
+        });
+
+        return html;
+    }
+
+    private void HandleCitationClick(Citation citation)
+    {
+        AppStateManager.ShowCitation(citation);
+        StateHasChanged();
+    }
+
+    private void ClosePdfViewer()
+    {
+        AppStateManager.ClosePdfViewer();
+        StateHasChanged();
+    }
 }

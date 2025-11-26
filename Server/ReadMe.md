@@ -126,6 +126,59 @@ Verify that policy PDFs are placed in the correct directory structure under `Ser
 
 Check that the Anthropic API key is valid and the API service is accessible.
 
+## Citation Feature Implementation
+
+### 1. Citation Extraction (Server)
+
+The `ChatbotService` now sends a system prompt that instructs Claude to use a specific citation format:
+
+```
+[CITE:page_number:"exact quoted text"]
+```
+
+For example, Claude might respond:
+> The policy states [CITE:5:"the excess is £250 for all claims"] which means you pay this first.
+
+### 2. Citation Parsing
+
+The service parses this response using regex and converts citations to structured data:
+
+```csharp
+var citationPattern = new Regex(@"\[CITE:(\d+):""([^""]+)""\]");
+```
+
+Each match becomes a `Citation` object with page number and quoted text.
+
+### 3. Citation Display (Client)
+
+In the chat, citations appear as:
+- Superscript markers `[1]` inline with text
+- A "Sources:" bar below the message with clickable "Page X" chips
+
+### 4. Split-Screen PDF Viewer
+
+When a user clicks a citation chip:
+1. `AppStateManager.ShowCitation(citation)` is called
+2. `IsPdfViewerOpen` becomes `true`
+3. The layout switches to 50/50 split
+4. The PDF loads in an iframe with `#page=N` to navigate to the cited page
+
+## Usage
+
+After implementing these changes:
+
+1. Ask a question about the policy
+2. Claude responds with embedded citations
+3. See numbered references `[1]`, `[2]` in the response
+4. Click any "Page X" chip in the Sources bar
+5. The PDF opens on the right, showing the cited page
+6. Close the PDF viewer with the X button
+
+## Responsive Behavior
+
+On screens < 960px, the split-screen stacks vertically (chat on top, PDF below).
+
+
 ---
 
 **Built with ?? using Blazor WebAssembly and .NET 10**

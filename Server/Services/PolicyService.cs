@@ -1,5 +1,4 @@
-﻿using PolicyChatbot.Shared;
-using PolicyChatbot.Shared.Models;
+﻿using PolicyChatbot.Shared.Models;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
@@ -7,37 +6,12 @@ namespace PolicyChatbot.Server.Services;
 
 public interface IPolicyService
 {
-    /// <summary>
-    /// Retrieves a list of available insurance types.
-    /// </summary>
-    /// <returns>A list of strings representing the names of the available insurance types.  The list will be empty if no
-    /// insurance types are available.</returns>
     List<string> GetInsuranceTypes();
-
-    /// <summary>
-    /// Retrieves a list of insurers that provide coverage for the specified insurance type.
-    /// </summary>
-    /// <param name="insuranceType">The type of insurance to filter insurers by. For example, "Car", "Home", or "Van".</param>
-    /// <returns>A list of insurer names that offer the specified type of insurance. The list will be empty if no matching
-    /// insurers are found.</returns>
     List<string> GetInsurers(string insuranceType);
-
-    /// <summary>
-    /// Retrieves a list of products based on the specified insurance type and insurer.
-    /// </summary>
-    /// <param name="insuranceType">The type of insurance to filter products by. This value cannot be null or empty.</param>
-    /// <param name="insurer">The name of the insurer to filter products by. This value cannot be null or empty.</param>
-    /// <returns>A list of <see cref="ProductInfo"/> objects that match the specified criteria. Returns an empty list if no
-    /// products are found.</returns>
     List<ProductInfo> GetProducts(string insuranceType, string insurer);
-
-    /// <summary>
-    /// Retrieves the policy content associated with the specified product identifier.
-    /// </summary>
-    /// <param name="productId">The unique identifier of the product for which the policy content is requested. Cannot be null or empty.</param>
-    /// <returns>The policy content as a string if the product identifier is valid and a policy exists; otherwise, <see
-    /// langword="null"/>.</returns>
     string? GetPolicyContent(string productId);
+    PolicyContent? GetPolicyContentWithPages(string productId);
+    string? GetPdfPath(string productId);
 }
 
 public class PolicyService : IPolicyService
@@ -50,7 +24,6 @@ public class PolicyService : IPolicyService
         _policyPath = Path.Combine(env.ContentRootPath, "PolicyDocuments");
         _logger = logger;
 
-        // Ensure the base directory exists
         if (!Directory.Exists(_policyPath))
         {
             Directory.CreateDirectory(_policyPath);
@@ -58,7 +31,6 @@ public class PolicyService : IPolicyService
         }
     }
 
-    /// <inheritdoc/>
     public List<string> GetInsuranceTypes()
     {
         if (!Directory.Exists(_policyPath))
@@ -70,13 +42,12 @@ public class PolicyService : IPolicyService
             .ToList()!;
     }
 
-    /// <inheritdoc/>
     public List<string> GetInsurers(string insuranceType)
     {
         var typePath = Path.Combine(_policyPath, insuranceType);
 
         if (!Directory.Exists(typePath))
-            return new List<string>();
+            return [];
 
         return Directory.GetDirectories(typePath)
             .Select(d => Path.GetFileName(d))
@@ -84,13 +55,12 @@ public class PolicyService : IPolicyService
             .ToList()!;
     }
 
-    /// <inheritdoc/>
     public List<ProductInfo> GetProducts(string insuranceType, string insurer)
     {
         string? insurerPath = Path.Combine(_policyPath, insuranceType, insurer);
 
         if (!Directory.Exists(insurerPath))
-            return new List<ProductInfo>();
+            return [];
 
         return Directory.GetFiles(insurerPath, "*.pdf")
             .Select(file =>
@@ -107,12 +77,36 @@ public class PolicyService : IPolicyService
             .ToList();
     }
 
-    /// <inheritdoc/>
     public string? GetPolicyContent(string productId)
+    {
+        var content = GetPolicyContentWithPages(productId);
+        return content?.FullText;
+    }
+
+    public PolicyContent? GetPolicyContentWithPages(string productId)
     {
         try
         {
-            // Parse productId: InsuranceType_Insurer_ProductName
+            var pdfPath = GetPdfPath(productId);
+            if (pdfPath == null || !File.Exists(pdfPath))
+            {
+                _logger.LogWarning("PDF file not found for productId: {ProductId}", productId);
+                return null;
+            }
+
+            return ExtractTextFromPdfWithPages(pdfPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading policy content for productId: {ProductId}", productId);
+            return null;
+        }
+    }
+
+    public string? GetPdfPath(string productId)
+    {
+        try
+        {
             var parts = productId.Split('_', 3);
             if (parts.Length < 3)
             {
@@ -126,35 +120,42 @@ public class PolicyService : IPolicyService
 
             var pdfPath = Path.Combine(_policyPath, insuranceType, insurer, $"{productName}.pdf");
 
-            if (!File.Exists(pdfPath))
-            {
-                _logger.LogWarning("PDF file not found: {PdfPath}", pdfPath);
-                return null;
-            }
-
-            return ExtractTextFromPdf(pdfPath);
+            return File.Exists(pdfPath) ? pdfPath : null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error reading policy content for productId: {ProductId}", productId);
+            _logger.LogError(ex, "Error getting PDF path for productId: {ProductId}", productId);
             return null;
         }
     }
 
-    /// <inheritdoc/>
-    private string ExtractTextFromPdf(string pdfPath)
+    private PolicyContent ExtractTextFromPdfWithPages(string pdfPath)
     {
         try
         {
             using var document = PdfDocument.Open(pdfPath);
-            var text = new System.Text.StringBuilder();
+            var fullText = new System.Text.StringBuilder();
+            var pages = new List<PolicyPage>();
 
             foreach (Page page in document.GetPages())
             {
-                text.AppendLine(page.Text);
+                var pageText = page.Text;
+                fullText.AppendLine($"[Page {page.Number}]");
+                fullText.AppendLine(pageText);
+                fullText.AppendLine();
+
+                pages.Add(new PolicyPage
+                {
+                    PageNumber = page.Number,
+                    Content = pageText
+                });
             }
 
-            return text.ToString();
+            return new PolicyContent
+            {
+                FullText = fullText.ToString(),
+                Pages = pages
+            };
         }
         catch (Exception ex)
         {

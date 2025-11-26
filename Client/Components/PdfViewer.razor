@@ -1,0 +1,69 @@
+@using PolicyChatbot.Shared.Models
+
+<div class="pdf-viewer-container">
+    <div class="pdf-viewer-header">
+        <div class="pdf-viewer-title">
+            <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-2" />
+            <MudText Typo="Typo.subtitle1">Policy Source</MudText>
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                       Size="Size.Small" 
+                       OnClick="OnClose" 
+                       title="Close" />
+    </div>
+    
+    @if (Citation != null)
+    {
+        <div class="citation-info">
+            <MudChip T="string" 
+                     Color="Color.Primary" 
+                     Size="Size.Small"
+                     Icon="@Icons.Material.Filled.Numbers">
+                Page @Citation.PageNumber
+            </MudChip>
+        </div>
+        
+        <div class="highlight-preview">
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
+                Referenced text:
+            </MudText>
+            <MudPaper Class="highlight-text" Elevation="0">
+                <MudText Typo="Typo.body2">
+                    "@Citation.HighlightText"
+                </MudText>
+            </MudPaper>
+        </div>
+    }
+    
+    <div class="pdf-embed-container">
+        @if (!string.IsNullOrEmpty(ProductId))
+        {
+            <iframe src="@GetPdfUrl()" 
+                    class="pdf-iframe"
+                    title="Policy PDF Viewer">
+            </iframe>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Citation? Citation { get; set; }
+
+    [Parameter]
+    public string ProductId { get; set; } = "";
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private string GetPdfUrl()
+    {
+        var baseUrl = $"api/policy/pdf/{ProductId}";
+        if (Citation != null)
+        {
+            // Add page parameter for PDF viewer to navigate to
+            return $"{baseUrl}#page={Citation.PageNumber}";
+        }
+        return baseUrl;
+    }
+}

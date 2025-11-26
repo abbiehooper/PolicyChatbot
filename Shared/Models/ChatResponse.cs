@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PolicyChatbot.Shared.Models;
+﻿namespace PolicyChatbot.Shared.Models;
 
 public class ChatResponse
 {
     public string Answer { get; set; } = "";
+    public List<Citation> Citations { get; set; } = [];
 }

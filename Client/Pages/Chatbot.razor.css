@@ -1,37 +1,122 @@
-﻿    .mud--container ::deep .chatbot-container {
-        display: flex;
+.page-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+.chat-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+    transition: all 0.3s ease;
+}
+
+.split-view .chat-side {
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+
+.pdf-side {
+    flex: 0 0 50%;
+    max-width: 50%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.page-container ::deep .chatbot-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+}
+
+.page-container ::deep .chatbot-title {
+    flex-shrink: 0;
+    margin-bottom: 1.5rem;
+}
+
+.page-container ::deep .chat-messages-card {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.page-container ::deep .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 16px;
+    height: 100%;
+}
+
+.page-container ::deep .chat-input-section {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin-bottom: 16px;
+    height: 100%;
+    padding: 1.5rem;
+}
+
+/* Citation styles */
+.citations-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--mud-palette-lines-default);
+    gap: 4px;
+}
+
+.citation-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--mud-palette-primary);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin: 0 2px;
+    vertical-align: super;
+    cursor: default;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+    .page-container {
         flex-direction: column;
-        flex: 1;
-        height: 100%;
     }
 
-    .mud--container ::deep .chatbot-title {
-        flex-shrink: 0;
-        margin-bottom: 1.5rem;
+    .split-view .chat-side {
+        flex: 0 0 50%;
+        max-width: 100%;
     }
 
-    .mud--container ::deep .chat-messages-card {
-        padding: 1.5rem;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        min-height: 0
+    .pdf-side {
+        flex: 0 0 50%;
+        max-width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--mud-palette-lines-default);
     }
-
-    .mud--container ::deep .chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        margin-bottom: 16px;
-        height: 100%;
-    }
-
-    .mud--container ::deep .chat-input-section {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        margin-bottom: 16px;
-        height: 100%;
-        padding: 1.5rem;
-    }
+}

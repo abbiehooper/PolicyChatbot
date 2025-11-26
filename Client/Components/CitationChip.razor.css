@@ -1,0 +1,9 @@
+.citation-chip {
+    cursor: pointer;
+    margin-left: 4px;
+    font-size: 0.75rem;
+}
+
+.citation-chip:hover {
+    background-color: var(--mud-palette-primary-hover) !important;
+}
