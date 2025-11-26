@@ -132,3 +132,23 @@ li {
 p {
     margin-bottom: 0.5rem;
 }
+
+.welcome-container {
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+    margin: 0 auto;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.greeting {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.mud--container {
+    display: flex;
+    height: 100%;
+}

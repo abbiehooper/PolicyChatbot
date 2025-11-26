@@ -1,0 +1,5 @@
+﻿.mud--container ::deep .select-policy-card {
+    flex-shrink: 0;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}

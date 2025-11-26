@@ -14,81 +14,34 @@ public partial class Chatbot
     [Inject]
     public required IJSRuntime JS { get; set; }
 
-    private List<string> insuranceTypes = [];
-    private List<string> availableInsurers = [];
-    private List<ProductInfo> availableProducts = [];
+    [Inject]
+    public required IAppStateManager AppStateManager { get; set; }
+    
+    [Inject]
+    public required HttpClient Http { get; set; }
 
-    private string selectedInsuranceType = "";
-    private string selectedInsurer = "";
-    private string selectedProductId = "";
-
-    private readonly List<ChatMessage> chatMessages = [];
     private string userInput = "";
     private bool isLoading = false;
-    private string errorMessage = "";
-
-    private string SelectedProductName =>
-        availableProducts.Find(p => p.Id == selectedProductId)?.Name ?? "";
 
     protected override async Task OnInitializedAsync()
     {
+        AppStateManager.OnProductSelectedAsync += RefreshAsync;
+
         try
         {
-            insuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? new();
+            AppStateManager.InsuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? [];
         }
         catch (Exception ex)
         {
-            errorMessage = $"Failed to load insurance types: {ex.Message}";
+            AppStateManager.ErrorMessage = $"Failed to load insurance types: {ex.Message}";
         }
     }
+
+    private void RefreshAsync(object? sender, EventArgs e) => StateHasChanged();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await JS.InvokeVoidAsync("scrollToBottomById", "scrollContainer");
-    }
-
-    private async Task OnInsuranceTypeChanged(string value)
-    {
-        selectedInsuranceType = value;
-        selectedInsurer = "";
-        selectedProductId = "";
-        availableInsurers.Clear();
-        availableProducts.Clear();
-        chatMessages.Clear();
-        errorMessage = "";
-
-        if (!string.IsNullOrEmpty(selectedInsuranceType))
-        {
-            try
-            {
-                availableInsurers = await Http.GetFromJsonAsync<List<string>>($"api/policy/insurers?insuranceType={selectedInsuranceType}") ?? new();
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Failed to load insurers: {ex.Message}";
-            }
-        }
-    }
-
-    private async Task OnInsurerChanged(string value)
-    {
-        selectedInsurer = value;
-        selectedProductId = "";
-        availableProducts.Clear();
-        chatMessages.Clear();
-        errorMessage = "";
-
-        if (!string.IsNullOrEmpty(selectedInsurer) && !string.IsNullOrEmpty(selectedInsuranceType))
-        {
-            try
-            {
-                availableProducts = await Http.GetFromJsonAsync<List<ProductInfo>>($"api/policy/products?insuranceType={selectedInsuranceType}&insurer={selectedInsurer}") ?? new();
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Failed to load products: {ex.Message}";
-            }
-        }
     }
 
     private async Task SendMessage()
@@ -98,16 +51,16 @@ public partial class Chatbot
 
         var question = userInput;
         userInput = "";
-        errorMessage = "";
+        AppStateManager.ErrorMessage = "";
 
-        chatMessages.Add(new ChatMessage { Content = question, IsUser = true });
+        AddChatMessage(question, true);
         isLoading = true;
 
         try
         {
             var request = new ChatRequest
             {
-                ProductId = selectedProductId,
+                ProductId = AppStateManager.SelectedProductId,
                 Question = question
             };
 
@@ -116,20 +69,16 @@ public partial class Chatbot
             if (response.IsSuccessStatusCode)
             {
                 var chatResponse = await response.Content.ReadFromJsonAsync<ChatResponse>();
-                chatMessages.Add(new ChatMessage
-                {
-                    Content = chatResponse?.Answer ?? "No response received",
-                    IsUser = false
-                });
+                AddChatMessage(chatResponse?.Answer ?? "No response received", false);
             }
             else
             {
-                errorMessage = $"Error: {response.StatusCode}";
+                AppStateManager.ErrorMessage = $"Error: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error: {ex.Message}";
+            AppStateManager.ErrorMessage = $"Error: {ex.Message}";
         }
         finally
         {
@@ -139,11 +88,7 @@ public partial class Chatbot
         }
     }
 
-    private static 
-        string GetMessageClass(bool isUser)
-    {
-        return isUser
-            ? "user message"
-            : "bot message";
-    }
+    private void AddChatMessage(string content, bool isUser) => AppStateManager.ChatMessages.Add(new ChatMessage { Content = content, IsUser = isUser });
+
+    private static string GetMessageClass(bool isUser) => isUser ? "user message" : "bot message";
 }

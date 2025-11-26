@@ -1,0 +1,53 @@
+﻿@if (string.IsNullOrEmpty(AppStateManager.SelectedProductId))
+{
+    <div class="mud--container">
+        <MudContainer Class="welcome-container">
+            <MudText Typo="Typo.h4" Color="Color.Primary" Class="greeting">
+                Let me handle the fine print. Which policy are we checking today?
+            </MudText>
+            <MudPaper Class="select-policy-card" Elevation=0 Outlined="false">
+                <MudGrid>
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string"
+                                   Label="Policy Type"
+                                   Variant="Variant.Text"
+                                   Value="@AppStateManager.SelectedInsuranceType"
+                                   ValueChanged="OnInsuranceTypeChanged">
+                            @foreach (var type in AppStateManager.InsuranceTypes)
+                            {
+                                <MudSelectItem T="string" Value="@type">@type</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string" Label="Insurer"
+                                   Variant="Variant.Text"
+                                   Value="@AppStateManager.SelectedInsurer"
+                                   ValueChanged="OnInsurerChanged"
+                                   Disabled="@(string.IsNullOrEmpty(AppStateManager.SelectedInsuranceType))">
+                            @foreach (var insurer in AppStateManager.AvailableInsurers)
+                            {
+                                <MudSelectItem T="string" Value="@insurer">@insurer</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+
+                    <MudItem xs="12" md="4">
+                        <MudSelect T="string"
+                                   Label="Product"
+                                   Variant="Variant.Text"
+                                   Disabled="@(string.IsNullOrEmpty(AppStateManager.SelectedInsurer))"
+                                   ValueChanged="OnProductChanged">
+                            @foreach (var product in AppStateManager.AvailableProducts)
+                            {
+                                <MudSelectItem T="string" Value="@product.Id">@product.Name</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudContainer>
+    </div>
+}
+
