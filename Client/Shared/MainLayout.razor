@@ -1,5 +1,4 @@
 ﻿@inherits LayoutComponentBase
-@inject NavigationManager NavigationManager;
 
 <MudThemeProvider Theme="MyCustomTheme"/>
 <MudPopoverProvider />
@@ -16,7 +15,8 @@
                 Icon="@Icons.Material.Filled.Add" 
                 Color="Color.Inherit" 
                 Edge="Edge.End"
-                title="New Chat" />
+                title="New Chat" 
+                OnClick="AppStateManager.StartNewChat"/>
         </MudAppBar>
         <MudMainContent Class="mud-main-content-style">
             @Body
@@ -25,6 +25,10 @@
 </div>
 
 @code {
+
+    [Inject]
+    public required IAppStateManager AppStateManager { get; set; }
+
     MudTheme MyCustomTheme = new MudTheme()
     {
         Typography = new Typography()

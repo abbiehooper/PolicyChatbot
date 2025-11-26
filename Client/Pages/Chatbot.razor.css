@@ -120,3 +120,67 @@
         border-top: 1px solid var(--mud-palette-lines-default);
     }
 }
+
+/* Inline Citation Styles */
+.page-container ::deep .inline-citation {
+    display: inline;
+}
+
+.page-container ::deep .citation-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--mud-palette-primary);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin: 0 2px;
+    vertical-align: super;
+}
+
+.page-container ::deep .citation-quote {
+    display: inline;
+}
+
+.page-container ::deep .quote-text {
+    display: inline;
+    font-style: italic;
+    color: #555;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.75;
+}
+
+.page-container ::deep .view-source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+    padding: 2px 8px;
+    background: white;
+    border: 1px solid var(--mud-palette-primary);
+    border-radius: 12px;
+    color: var(--mud-palette-primary);
+    font-size: 0.7rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+    .page-container ::deep .view-source-link:hover {
+        background: var(--mud-palette-primary);
+        color: white;
+    }
+
+    .page-container ::deep .view-source-link svg {
+        flex-shrink: 0;
+    }
+
+.page-container ::deep .page-ref {
+    white-space: nowrap;
+}

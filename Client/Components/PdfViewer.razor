@@ -1,4 +1,5 @@
 @using PolicyChatbot.Shared.Models
+@inject IJSRuntime JS
 
 <div class="pdf-viewer-container">
     <div class="pdf-viewer-header">
@@ -6,23 +7,23 @@
             <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Small" Class="mr-2" />
             <MudText Typo="Typo.subtitle1">Policy Source</MudText>
         </div>
-        <MudIconButton Icon="@Icons.Material.Filled.Close" 
-                       Size="Size.Small" 
-                       OnClick="OnClose" 
+        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                       Size="Size.Small"
+                       OnClick="OnClose"
                        title="Close" />
     </div>
-    
+
     @if (Citation != null)
     {
         <div class="citation-info">
-            <MudChip T="string" 
-                     Color="Color.Primary" 
+            <MudChip T="string"
+                     Color="Color.Primary"
                      Size="Size.Small"
                      Icon="@Icons.Material.Filled.Numbers">
                 Page @Citation.PageNumber
             </MudChip>
         </div>
-        
+
         <div class="highlight-preview">
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-1">
                 Referenced text:
@@ -34,11 +35,12 @@
             </MudPaper>
         </div>
     }
-    
+
     <div class="pdf-embed-container">
         @if (!string.IsNullOrEmpty(ProductId))
         {
-            <iframe src="@GetPdfUrl()" 
+            <iframe @key="iframeKey"
+                    src="@GetPdfUrl()"
                     class="pdf-iframe"
                     title="Policy PDF Viewer">
             </iframe>
@@ -55,6 +57,19 @@
 
     [Parameter]
     public EventCallback OnClose { get; set; }
+
+    private int? previousPageNumber;
+    private string iframeKey = Guid.NewGuid().ToString();
+
+    protected override void OnParametersSet()
+    {
+        // Force iframe to reload when the citation page changes
+        if (Citation?.PageNumber != previousPageNumber)
+        {
+            previousPageNumber = Citation?.PageNumber;
+            iframeKey = Guid.NewGuid().ToString();
+        }
+    }
 
     private string GetPdfUrl()
     {

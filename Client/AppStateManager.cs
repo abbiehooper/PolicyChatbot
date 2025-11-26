@@ -17,11 +17,11 @@ public interface IAppStateManager
     string ErrorMessage { get; set; }
     EventHandler? OnProductSelectedAsync { get; set; }
     void InvokeOnProductSelected();
-    
+    void StartNewChat();
+
     // Citation state
     bool IsPdfViewerOpen { get; set; }
     Citation? SelectedCitation { get; set; }
-    List<Citation> CurrentCitations { get; set; }
     void ShowCitation(Citation citation);
     void ClosePdfViewer();
     EventHandler? OnCitationSelected { get; set; }
@@ -42,7 +42,6 @@ public class AppStateManager : IAppStateManager
     // Citation state
     public bool IsPdfViewerOpen { get; set; } = false;
     public Citation? SelectedCitation { get; set; }
-    public List<Citation> CurrentCitations { get; set; } = [];
     public EventHandler? OnCitationSelected { get; set; }
 
     public void OnInsuranceTypeChanged(string value)
@@ -78,5 +77,20 @@ public class AppStateManager : IAppStateManager
         IsPdfViewerOpen = false;
         SelectedCitation = null;
         OnCitationSelected?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void StartNewChat()
+    {
+        SelectedInsuranceType = "";
+        SelectedInsurer = "";
+        SelectedProductId = "";
+        AvailableInsurers.Clear();
+        AvailableProducts.Clear();
+        ChatMessages.Clear();
+        ErrorMessage = "";
+        ClosePdfViewer();
+
+        // Trigger UI refresh
+        InvokeOnProductSelected();
     }
 }

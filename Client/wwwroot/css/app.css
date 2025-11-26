@@ -159,31 +159,3 @@ p {
     height: 100%;
     width: 100%;
 }
-
-/* Citation marker styles */
-.citation-marker {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--mud-palette-primary);
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 1px 5px;
-    border-radius: 4px;
-    margin: 0 2px;
-    vertical-align: super;
-    cursor: default;
-    text-decoration: none;
-}
-
-/* Citations bar */
-.citations-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--mud-palette-lines-default);
-    gap: 4px;
-}

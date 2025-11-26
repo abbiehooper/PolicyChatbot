@@ -5,13 +5,29 @@ using static System.Net.WebRequestMethods;
 
 namespace PolicyChatbot.Client.Components;
 
-public partial class PolicySelection
+public partial class PolicySelection : IDisposable
 {
     [Inject]
     public required IAppStateManager AppStateManager { get; set; }
 
     [Inject]
     public required HttpClient Http { get; set; }
+
+    private bool disposedValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AppStateManager.OnProductSelectedAsync += RefreshAsync;
+
+        try
+        {
+            AppStateManager.InsuranceTypes = await Http.GetFromJsonAsync<List<string>>("api/policy/insurance-types") ?? [];
+        }
+        catch (Exception ex)
+        {
+            AppStateManager.ErrorMessage = $"Failed to load insurance types: {ex.Message}";
+        }
+    }
 
     private async Task OnInsuranceTypeChanged(string value)
     {
@@ -52,4 +68,26 @@ public partial class PolicySelection
         AppStateManager.SelectedProductId = value;
         AppStateManager.InvokeOnProductSelected();
     }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                AppStateManager.OnProductSelectedAsync -= RefreshAsync;
+            }
+
+            disposedValue = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void RefreshAsync(object? sender, EventArgs e) => StateHasChanged();
 }
