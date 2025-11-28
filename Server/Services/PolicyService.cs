@@ -129,7 +129,7 @@ public class PolicyService : IPolicyService
         }
     }
 
-    private PolicyContent ExtractTextFromPdfWithPages(string pdfPath)
+    private PolicyContent? ExtractTextFromPdfWithPages(string pdfPath)
     {
         try
         {
@@ -160,7 +160,7 @@ public class PolicyService : IPolicyService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error extracting text from PDF: {PdfPath}", pdfPath);
-            throw;
+            return null;
         }
     }
 }

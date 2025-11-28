@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
+﻿using PolicyChatbot.Shared.Models;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using PolicyChatbot.Shared.Models;
 
 namespace PolicyChatbot.Server.Services;
 
@@ -27,7 +27,7 @@ public class ChatbotService(IHttpClientFactory httpClientFactory) : IChatbotServ
         var content = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString()
             ?? "Sorry, I couldn't process that request.";
 
-        return ParseResponseWithCitations(content, policyContent);
+        return ParseResponseWithCitations(content);
     }
 
     private static string BuildSystemPromptWithCitations(PolicyContent policyContent)
@@ -37,40 +37,40 @@ public class ChatbotService(IHttpClientFactory httpClientFactory) : IChatbotServ
 
         return $@"You are a helpful insurance policy assistant. You ONLY answer questions about the specific insurance policy provided below.
 
-POLICY DOCUMENT (with page numbers):
-{pagesContext}
+            POLICY DOCUMENT (with page numbers):
+            {pagesContext}
 
-RULES:
-- Only answer questions based on the policy information provided above
-- If the policy doesn't mention something, clearly state 'This policy does not specify information about [topic]'
-- Be concise and specific
-- If asked about topics not in the policy, politely redirect to policy-related questions
+            RULES:
+            - Only answer questions based on the policy information provided above
+            - If the policy doesn't mention something, clearly state 'This policy does not specify information about [topic]'
+            - Be concise and specific
+            - If asked about topics not in the policy, politely redirect to policy-related questions
 
-CRITICAL CITATION FORMAT:
-When you quote or reference specific text from the policy, you MUST use this exact format:
-[CITE:page_number:""exact quoted text""]
+            CRITICAL CITATION FORMAT:
+            When you quote or reference specific text from the policy, you MUST use this exact format:
+            [CITE:page_number:""exact quoted text""]
 
-For example:
-- The policy states [CITE:5:""the excess is £250 for all claims""] which means you would pay this amount first.
-- According to [CITE:12:""fire damage is covered under Section 3""], your property is protected.
+            For example:
+            - The policy states [CITE:5:""the excess is £250 for all claims""] which means you would pay this amount first.
+            - According to [CITE:12:""fire damage is covered under Section 3""], your property is protected.
 
-IMPORTANT:
-- Always include the page number where you found the information
-- Quote the exact text from that page (or a relevant portion)
-- You can have multiple citations in one response
-- Every factual claim about the policy should have a citation
-- The quoted text should be word-for-word from the policy
+            IMPORTANT:
+            - Always include the page number where you found the information
+            - Quote the exact text from that page (or a relevant portion)
+            - You can have multiple citations in one response
+            - Every factual claim about the policy should have a citation
+            - The quoted text should be word-for-word from the policy
 
-FORMATTING: 
-- Keep your explanations clear and helpful
-- Use the citation format for all policy references";
+            FORMATTING: 
+            - Keep your explanations clear and helpful
+            - Use the citation format for all policy references";
     }
 
     private static object BuildClaudeRequest(string question, string systemPrompt) =>
         new
         {
-            model = "claude-sonnet-4-20250514",
-            max_tokens = 2048,
+            model = "claude-haiku-4-5-20251001",
+            max_tokens = 1500,
             system = systemPrompt,
             messages = new[]
             {
@@ -78,7 +78,7 @@ FORMATTING:
             }
         };
 
-    private static ChatResponse ParseResponseWithCitations(string rawResponse, PolicyContent policyContent)
+    private static ChatResponse ParseResponseWithCitations(string rawResponse)
     {
         var citations = new List<Citation>();
         var citationIndex = 0;

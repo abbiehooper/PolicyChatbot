@@ -1,6 +1,4 @@
-using Microsoft.AspNetCore.ResponseCompression;
-using MudBlazor.Services;
-using PolicyChatbot.Server.Services;
+using PolicyChatbot.Server.Middleware;
 using PolicyChatbot.Server.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +28,7 @@ app.UseHttpsRedirection();
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiting();
 app.MapRazorPages();
 app.MapControllers();
 app.MapStaticAssets();
