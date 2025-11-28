@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using PolicyChatbot.Shared.Models;
 using System.Net.Http.Json;
-using static System.Net.WebRequestMethods;
 
 namespace PolicyChatbot.Client.Components;
 
@@ -31,7 +30,7 @@ public partial class PolicySelection : IDisposable
 
     private async Task OnInsuranceTypeChanged(string value)
     {
-        AppStateManager.OnInsuranceTypeChanged(value);
+        await AppStateManager.OnInsuranceTypeChanged(value);
 
         if (!string.IsNullOrEmpty(AppStateManager.SelectedInsuranceType))
         {
@@ -48,7 +47,7 @@ public partial class PolicySelection : IDisposable
 
     private async Task OnInsurerChanged(string value)
     {
-        AppStateManager.OnInsurerChanged(value);
+        await AppStateManager.OnInsurerChanged(value);
 
         if (!string.IsNullOrEmpty(AppStateManager.SelectedInsurer) && !string.IsNullOrEmpty(AppStateManager.SelectedInsuranceType))
         {
