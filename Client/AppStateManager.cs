@@ -1,19 +1,20 @@
 using PolicyChatbot.Shared.Models;
+using System.Net.Http.Json;
 
 namespace PolicyChatbot.Client;
 
 public interface IAppStateManager
 {
-    List<string> InsuranceTypes { get; set; } 
-    List<string> AvailableInsurers { get; set; } 
-    List<ProductInfo> AvailableProducts { get; set; } 
-    string SelectedInsuranceType { get; set; } 
-    string SelectedInsurer { get; set; } 
-    string SelectedProductId { get; set; } 
+    List<string> InsuranceTypes { get; set; }
+    List<string> AvailableInsurers { get; set; }
+    List<ProductInfo> AvailableProducts { get; set; }
+    string SelectedInsuranceType { get; set; }
+    string SelectedInsurer { get; set; }
+    string SelectedProductId { get; set; }
     string SelectedProductName { get; }
-    void OnInsuranceTypeChanged(string value);
-    void OnInsurerChanged(string value);
-    List<ChatMessage> ChatMessages { get; } 
+    Task OnInsuranceTypeChanged(string value);
+    Task OnInsurerChanged(string value);
+    List<ChatMessage> ChatMessages { get; }
     string ErrorMessage { get; set; }
     EventHandler? OnProductSelectedAsync { get; set; }
     void InvokeOnProductSelected();
@@ -27,7 +28,7 @@ public interface IAppStateManager
     EventHandler? OnCitationSelected { get; set; }
 }
 
-public class AppStateManager : IAppStateManager
+public class AppStateManager(HttpClient http, ILogger<AppStateManager> logger) : IAppStateManager
 {
     public List<string> InsuranceTypes { get; set; } = [];
     public List<string> AvailableInsurers { get; set; } = [];
@@ -44,16 +45,30 @@ public class AppStateManager : IAppStateManager
     public Citation? SelectedCitation { get; set; }
     public EventHandler? OnCitationSelected { get; set; }
 
-    public void OnInsuranceTypeChanged(string value)
+    public async Task OnInsuranceTypeChanged(string value)
     {
         SelectedInsuranceType = value;
         AvailableInsurers.Clear();
-        OnInsurerChanged("");
+        await OnInsurerChanged("");
     }
 
-    public void OnInsurerChanged(string value)
+    public async Task OnInsurerChanged(string value)
     {
         SelectedInsurer = value;
+
+        if (!string.IsNullOrEmpty(SelectedProductId))
+        {
+            try
+            {
+                await http.PostAsJsonAsync("api/chatbot/clear-conversation",
+                    new ClearConversationRequest { ProductId = SelectedProductId });
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Failed to clear conversation for ProductId: {ProductId}", SelectedProductId);
+            }
+        }
+
         SelectedProductId = "";
         AvailableProducts.Clear();
         ChatMessages.Clear();

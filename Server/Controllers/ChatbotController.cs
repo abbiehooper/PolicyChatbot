@@ -19,8 +19,21 @@ public class ChatbotController(IPolicyService policyService, IChatbotService cha
         if (policyContent == null)
             return NotFound("Policy not found");
 
-        var response = await _chatbotService.GetClaudeResponseWithCitationsAsync(request.Question, policyContent);
+        // Use productId as conversationId - this keeps context per policy
+        var conversationId = request.ProductId;
+
+        var response = await _chatbotService.GetClaudeResponseWithCitationsAsync(
+            request.Question,
+            policyContent,
+            conversationId);
 
         return Ok(response);
+    }
+
+    [HttpPost("clear-conversation")]
+    public IActionResult ClearConversation([FromBody] ClearConversationRequest request)
+    {
+        _chatbotService.ClearConversation(request.ProductId);
+        return Ok();
     }
 }
