@@ -18,28 +18,33 @@ An intelligent chatbot application built with Blazor WebAssembly and .NET 10 tha
 - **UI Framework**: Bootstrap 5
 - **PDF Processing**: UglyToad.PdfPig
 - **AI Integration**: Anthropic API (Claude)
-- **Architecture**: Client-Server with Razor Pages
+- **Architecture**: Client-Server with Razor Pages
+
 ## Installation & Setup
 
-### 1. Clone the Repository
+### 1. Clone the Repository
+
 git clone https://github.com/abbiehooper/PolicyChatbot.git
-cd PolicyChatbot
+cd PolicyChatbot
+
 
 ### 2. Configure Anthropic API
 
 Create or update `appsettings.json` in the `Server` project with your Anthropic credentials:
-
+
+
 {
   "Anthropic": {
     "BaseUrl": "https://api.anthropic.com",
     "ApiKey": "your-api-key-here"
   }
-}
+}
+
 
 ### 3. Organize Policy Documents
 
 Create the following directory structure in `Server/PolicyDocuments`:
-
+```
 PolicyDocuments/
 ├── Car/
 │   ├── Insurer1/
@@ -52,12 +57,14 @@ PolicyDocuments/
 │       └── Homeowners_Policy.pdf
 └── Van/
     └── Insurer3/
-        └── Commercial_Van.pdf
+        └── Commercial_Van.pdf
+```
 
 ### 4. Build and Run
 
 dotnet build
-dotnet run --project Server
+dotnet run --project Server
+
 
 The application will be available at `https://localhost:5001` (or the configured port).
 
@@ -107,7 +114,8 @@ Core services are registered in `DependencyInjection.cs`:
 
 ### Building the Project
 
-dotnet build
+dotnet build
+
 ### Publishing
 
 dotnet publish -c Release -o ./publish
@@ -127,5 +135,6 @@ Verify that policy PDFs are placed in the correct directory structure under `Ser
 Check that the Anthropic API key is valid and the API service is accessible.
 
 ---
+
 
 **Built with ❤️ using Blazor WebAssembly and .NET 10**
