@@ -13,22 +13,14 @@ public interface IChatbotService
 
 /// <summary>
 /// ChatbotService with Prompt Caching support for cost optimization.
-/// 
-/// This implementation uses Claude's Prompt Caching feature which:
-/// 1. Caches the policy document in Claude's context
-/// 2. Only charges for new tokens (the question) on subsequent requests
-/// 3. Reduces costs by up to 90% for repeated queries on the same policy
-/// 4. Maintains conversation history for contextual responses
 /// </summary>
 public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<ChatbotService> logger) : IChatbotService
 {
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly ILogger<ChatbotService> _logger = logger;
 
-    // Store conversation histories by conversationId
     private static readonly ConcurrentDictionary<string, ConversationContext> _conversations = new();
 
-    // Cleanup old conversations periodically
     private static readonly Timer _cleanupTimer = new(CleanupOldConversations, null,
         TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30));
 
@@ -39,7 +31,6 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
     {
         var httpClient = _httpClientFactory.CreateClient("Anthropic");
 
-        // Get or create conversation context
         var context = _conversations.GetOrAdd(conversationId, _ => new ConversationContext
         {
             PolicyContent = policyContent,
@@ -47,38 +38,68 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
             IsFirstMessage = true
         });
 
-        // Update last accessed time
         context.LastAccessed = DateTime.UtcNow;
 
-        // Build request with prompt caching
         var requestBody = context.IsFirstMessage
             ? BuildInitialRequestWithCache(question, policyContent, context.Messages)
             : BuildFollowUpRequest(question, policyContent, context.Messages);
 
-        var response = await httpClient.PostAsJsonAsync("messages", requestBody);
-        var jsonResponse = await response.Content.ReadAsStringAsync();
-
-        // Log cache usage for monitoring
-        LogCacheUsage(jsonResponse);
-
-        var doc = JsonDocument.Parse(jsonResponse);
-        var content = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString()
-            ?? "Sorry, I couldn't process that request.";
-
-        var chatResponse = ParseResponseWithCitations(content);
-
-        // Store the conversation history (only user question and assistant response, not the policy)
-        context.Messages.Add(new ConversationMessage { Role = "user", Content = question });
-        context.Messages.Add(new ConversationMessage { Role = "assistant", Content = chatResponse.Answer });
-        context.IsFirstMessage = false;
-
-        // Limit history to last 20 messages (10 exchanges) to prevent context getting too large
-        if (context.Messages.Count > 20)
+        try
         {
-            context.Messages.RemoveRange(0, context.Messages.Count - 20);
-        }
+            var response = await httpClient.PostAsJsonAsync("messages", requestBody);
+            var jsonResponse = await response.Content.ReadAsStringAsync();
 
-        return chatResponse;
+            // Log the response for debugging
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Anthropic API error. Status: {StatusCode}, Response: {Response}",
+                    response.StatusCode, jsonResponse);
+                throw new HttpRequestException($"Anthropic API returned {response.StatusCode}: {jsonResponse}");
+            }
+
+            if (string.IsNullOrWhiteSpace(jsonResponse))
+            {
+                _logger.LogError("Anthropic API returned empty response");
+                throw new HttpRequestException("Anthropic API returned empty response");
+            }
+
+            LogCacheUsage(jsonResponse);
+
+            var doc = JsonDocument.Parse(jsonResponse);
+
+            if (!doc.RootElement.TryGetProperty("content", out var contentArray) ||
+                contentArray.GetArrayLength() == 0)
+            {
+                _logger.LogError("Unexpected API response structure: {Response}", jsonResponse);
+                throw new HttpRequestException("Unexpected API response structure");
+            }
+
+            var content = doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString()
+                ?? "Sorry, I couldn't process that request.";
+
+            var chatResponse = ParseResponseWithCitations(content);
+
+            context.Messages.Add(new ConversationMessage { Role = "user", Content = question });
+            context.Messages.Add(new ConversationMessage { Role = "assistant", Content = chatResponse.Answer });
+            context.IsFirstMessage = false;
+
+            if (context.Messages.Count > 20)
+            {
+                context.Messages.RemoveRange(0, context.Messages.Count - 20);
+            }
+
+            return chatResponse;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error calling Anthropic API");
+            throw new HttpRequestException($"Failed to connect to Anthropic API: {ex.Message}");
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse Anthropic API response");
+            throw new HttpRequestException($"Invalid response from Anthropic API: {ex.Message}");
+        }
     }
 
     public void ClearConversation(string conversationId)
@@ -87,10 +108,6 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
         _logger.LogInformation("Cleared conversation: {ConversationId}", conversationId);
     }
 
-    /// <summary>
-    /// Build the initial request with prompt caching.
-    /// The policy document is marked for caching, so subsequent requests won't re-send it.
-    /// </summary>
     private static object BuildInitialRequestWithCache(
         string question,
         PolicyContent policyContent,
@@ -135,7 +152,7 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
             {
                 type = "text",
                 text = $"POLICY DOCUMENT (with page numbers):\n\n{pagesContext}",
-                cache_control = new { type = "ephemeral" } // Mark for caching
+                cache_control = new { type = "ephemeral" }
             }
         };
 
@@ -150,15 +167,11 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
         };
     }
 
-    /// <summary>
-    /// Build follow-up requests. The cached policy content is automatically reused.
-    /// </summary>
     private static object BuildFollowUpRequest(
         string question,
         PolicyContent policyContent,
         List<ConversationMessage> history)
     {
-        // Same structure as initial request - caching happens automatically
         return BuildInitialRequestWithCache(question, policyContent, history);
     }
 
@@ -166,13 +179,11 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
     {
         var messages = new List<object>();
 
-        // Add conversation history (without the policy - that's in system prompt)
         foreach (var msg in history)
         {
             messages.Add(new { role = msg.Role, content = msg.Content });
         }
 
-        // Add new question
         messages.Add(new { role = "user", content = newQuestion });
 
         return messages;
@@ -182,6 +193,12 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(jsonResponse))
+            {
+                _logger.LogWarning("Empty response, cannot parse cache usage");
+                return;
+            }
+
             var doc = JsonDocument.Parse(jsonResponse);
             if (doc.RootElement.TryGetProperty("usage", out var usage))
             {
@@ -215,7 +232,6 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
         var citations = new List<Citation>();
         var citationIndex = 0;
 
-        // Pattern to match [CITE:page_number:"quoted text"]
         var citationPattern = new Regex(@"\[CITE:(\d+):""([^""]+)""\]", RegexOptions.Compiled);
 
         var processedAnswer = citationPattern.Replace(rawResponse, match =>
@@ -232,7 +248,6 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
                 HighlightText = quotedText
             });
 
-            // Replace with a superscript-style citation marker
             return $"<cite data-citation=\"{citationIndex}\">[{citationIndex}]</cite>";
         });
 
@@ -245,7 +260,7 @@ public class ChatbotService(IHttpClientFactory httpClientFactory, ILogger<Chatbo
 
     private static void CleanupOldConversations(object? state)
     {
-        var cutoffTime = DateTime.UtcNow.AddHours(-2); // Remove conversations older than 2 hours
+        var cutoffTime = DateTime.UtcNow.AddHours(-2);
         var toRemove = _conversations
             .Where(kvp => kvp.Value.LastAccessed < cutoffTime)
             .Select(kvp => kvp.Key)
